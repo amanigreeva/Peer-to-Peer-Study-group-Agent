@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudySync AI — Peer Learning Optimizer</title>
+  <meta name="description"
+    content="We use a hybrid clustering framework combining KNN-based missing value imputation, Z-score normalization, Ward-based hierarchical clustering, and greedy constraint balancing to ensure fair and interpretable student grouping under all edge cases." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">⬡</div>
+      <div class="brand-text">
+        <span class="brand-name">StudySync</span>
+        <span class="brand-tag">AI · Hybrid Framework</span>
+      </div>
+    </div>
+
+    <!-- Live Stats in Sidebar -->
+    <div class="sidebar-stats">
+      <div class="sstat" id="statStudents">
+        <div class="sstat-icon">👥</div>
+        <div>
+          <div class="sstat-num" id="totalStudents">{{ total }}</div>
+          <div class="sstat-label">Students Loaded</div>
+        </div>
+      </div>
+      <div class="sstat" id="statGroups">
+        <div class="sstat-icon">🔬</div>
+        <div>
+          <div class="sstat-num" id="totalGroups">—</div>
+          <div class="sstat-label">Groups Formed</div>
+        </div>
+      </div>
+      <div class="sstat">
+        <div class="sstat-icon">⚡</div>
+        <div>
+          <div class="sstat-num" id="compScore">—</div>
+          <div class="sstat-label">Complementarity</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="sidebar-divider"></div>
+
+    <!-- Seed Card -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">
+        <span class="ss-icon">🗄️</span> Data Source
+      </div>
+      <div class="form-group">
+        <label for="seedCount">Students to generate</label>
+        <input type="number" id="seedCount" value="20" min="4" max="100" />
+      </div>
+      <button class="btn btn-outline full-width" id="btnSeed">
+        <span>↻</span> Generate Sample Data
+      </button>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <!-- Algorithm Engine -->
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">
+        <span class="ss-icon">🧬</span> AI Engine
+      </div>
+      <div class="form-group">
+        <label for="algorithm">Clustering Algorithm</label>
+        <select id="algorithm">
+          <option value="balanced" selected>⚖️ Subject-Balanced</option>
+          <option value="hierarchical">🌐 Agglomerative Hierarchical</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="nGroups">Number of Groups</label>
+        <input type="number" id="nGroups" placeholder="Auto-detect" min="2" max="20" />
+      </div>
+      <button class="btn btn-primary full-width" id="btnFormGroups">
+        <span class="btn-spark">✦</span> Run AI Grouping
+      </button>
+    </div>
+
+    <div class="sidebar-footer">
+      Built with Python · scikit-learn · Flask
+    </div>
+  </aside>
+
+  <!-- ── MAIN CONTENT ── -->
+  <div class="main-content">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title">Peer-to-Peer Learning Optimizer</h1>
+        <span class="page-subtitle">We use a hybrid clustering framework combining KNN-based missing value imputation,
+          Z-score normalization, Ward-based hierarchical clustering, and greedy constraint balancing.</span>
+      </div>
+      <div class="topbar-right">
+        <input type="text" id="searchBox" placeholder="🔍 Search students…" class="search-box" />
+      </div>
+    </header>
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden"></div>
+    <!-- Loader -->
+    <div id="loader" class="loader hidden">
+      <div class="loader-ring"></div>
+      <p>Running Agglomerative Hierarchical clustering algorithm…</p>
+    </div>
+
+    <!-- Groups Result -->
+    <section id="groupsSection" class="hidden">
+      <div class="section-header">
+        <h2 class="section-title"><span class="sh-icon">🔬</span> Analysis Results</h2>
+      </div>
+      <div class="eval-bar" id="evalBar"></div>
+      <div id="groupsGrid" class="groups-grid"></div>
+
+      <!-- Visualisation -->
+      <div class="viz-panel">
+        <div class="viz-panel-header">
+          <span class="viz-title">📈 Cluster Topology · PCA Projection</span>
+          <span class="viz-badge">Agglomerative Hierarchical</span>
+        </div>
+        <div class="viz-wrap">
+          <img id="vizImg" src="" alt="Cluster plot" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Add Student + Students Table (side by side) -->
+    <div class="content-grid">
+
+      <!-- Add Student Form -->
+      <section class="panel-card">
+        <div class="panel-card-header">
+          <h2 class="panel-card-title">
+            <span class="pc-icon">➕</span> Register Student
+          </h2>
+        </div>
+        <form id="addStudentForm" autocomplete="off">
+          <div class="form-group">
+            <label for="fname">Full Name <span class="req">*</span></label>
+            <input type="text" id="fname" placeholder="e.g. Alice Smith" required />
+          </div>
+          <div class="form-group">
+            <label for="femail">Email Address</label>
+            <input type="email" id="femail" placeholder="alice@uni.edu" />
+          </div>
+          <div class="form-group">
+            <label for="fstyle">Learning Style</label>
+            <select id="fstyle">
+              {% for s in learning_styles %}
+              <option value="{{ s }}">{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="scores-header">
+            <span class="scores-title">📊 Subject Scores</span>
+            <span class="scores-range">0 – 100</span>
+          </div>
+
+          {% for subj in subjects %}
+          <div class="slider-row">
+            <label class="slider-label" for="subj_{{ loop.index }}">{{ subj }}</label>
+            <div class="slider-track-wrap">
+              <input type="range" id="subj_{{ loop.index }}" name="{{ subj }}" min="0" max="100" value="50"
+                oninput="document.getElementById('val_{{ loop.index }}').textContent=this.value" />
+            </div>
+            <span class="slider-val" id="val_{{ loop.index }}">50</span>
+          </div>
+          {% endfor %}
+
+          <div class="avail-section">
+            <span class="avail-title">📅 Availability</span>
+            <div class="avail-chips">
+              {% for a in availability_options %}
+              <label class="chip-label">
+                <input type="checkbox" name="availability" value="{{ a }}" />
+                <span class="chip-text">{{ a }}</span>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary full-width mt-1">
+            <span>＋</span> Add to Roster
+          </button>
+        </form>
+      </section>
+
+      <!-- Students Table -->
+      <section class="panel-card students-card">
+        <div class="panel-card-header">
+          <h2 class="panel-card-title">
+            <span class="pc-icon">👥</span> Student Roster
+          </h2>
+          <span class="roster-count" id="rosterCount">{{ total }} students</span>
+        </div>
+        <div class="table-wrap">
+          <table class="students-table" id="studentsTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Score</th>
+                <th>Strengths</th>
+                <th>Weaknesses</th>
+                <th>Style</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="studentsBody">
+              {% for s in students %}
+              <tr data-id="{{ s.id }}" class="student-row">
+                <td class="cell-id">{{ s.id }}</td>
+                <td class="cell-name">{{ s.name }}</td>
+                <td class="cell-avg">
+                  <span
+                    class="badge {{ 'badge-high' if s.average_score >= 70 else ('badge-mid' if s.average_score >= 50 else 'badge-low') }}">
+                    {{ "%.1f"|format(s.average_score) }}
+                  </span>
+                </td>
+                <td class="cell-tags">
+                  {% for t in s.strengths[:2] %}<span class="tag tag-strength">{{ t }}</span>{% endfor %}
+                </td>
+                <td class="cell-tags">
+                  {% for t in s.weaknesses[:2] %}<span class="tag tag-weakness">{{ t }}</span>{% endfor %}
+                </td>
+                <td class="cell-style">{{ s.learning_style }}</td>
+                <td><button class="btn-del" data-id="{{ s.id }}" title="Remove">✕</button></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div><!-- /content-grid -->
+
+  </div><!-- /main-content -->
+
+  <!-- ── STUDENT PROFILE MODAL ── -->
+  <div id="studentModal" class="modal-overlay hidden">
+    <div class="modal">
+      <button id="modalClose" class="modal-close">&times;</button>
+      <div class="modal-header">
+        <div class="modal-avatar" id="modalAvatar">AB</div>
+        <div>
+          <h2 class="modal-title" id="modalName">Student Name</h2>
+          <span class="modal-email" id="modalEmail">student@uni.edu</span>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="modal-info-grid">
+          <div class="modal-info-item">
+            <span class="modal-info-label">Learning Style</span>
+            <span class="modal-info-val" id="modalStyle">Visual</span>
+          </div>
+          <div class="modal-info-item">
+            <span class="modal-info-label">Availability</span>
+            <span class="modal-info-val" id="modalAvail">Morning, Evening</span>
+          </div>
+        </div>
+        <h3 class="modal-section-title">Subject Scores</h3>
+        <div class="modal-subjects" id="modalSubjectsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+
+</html>
