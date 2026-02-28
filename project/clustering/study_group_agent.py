@@ -401,7 +401,7 @@ class StudyGroupAgent:
         labels = np.array([student_to_group.get(s.id, 0) for s in self._students])
 
         n_groups = len(groups)
-        colors = cm.get_cmap("tab20", n_groups + 1)
+        colors = matplotlib.colormaps.get_cmap("tab20")
 
         fig, ax = plt.subplots(figsize=(10, 7))
         fig.patch.set_facecolor("#1a1a2e")
@@ -422,7 +422,8 @@ class StudyGroupAgent:
             )
             # Annotate names
             for idx in np.where(mask)[0]:
-                name = self._students[idx].name.split()[0]
+                name_parts = self._students[idx].name.split()
+                name = name_parts[0] if name_parts else "Student"
                 ax.annotate(
                     name,
                     (coords[idx, 0], coords[idx, 1]),

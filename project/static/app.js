@@ -36,6 +36,7 @@ function setLoader(show) {
 }
 
 function initials(name) {
+    if (!name) return "??";
     return name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
 }
 
@@ -57,11 +58,6 @@ function openStudentModal(sid) {
     // Subjects List
     const list = document.getElementById("modalSubjectsList");
     list.innerHTML = "";
-
-    // Subjects usually comes from the student object keys if they are numbers
-    // But let's look at the scores
-    const scores = s.scores || {};
-    // Fallback: s might have properties directly if it's from add_student
     const subjects = ["Mathematics", "Physics", "Chemistry", "Biology", "English", "Computer Science"];
 
     subjects.forEach(subj => {

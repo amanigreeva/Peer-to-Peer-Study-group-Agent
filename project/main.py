@@ -63,7 +63,7 @@ def main():
     # --- Choose clustering method ---
     print("Step 2 — Choose clustering algorithm")
     method = prompt_choice(
-        "  Algorithm", ["balanced", "gmm"], default="balanced"
+        "  Algorithm", ["balanced", "hierarchical"], default="balanced"
     )
 
     # --- Choose number of groups ---

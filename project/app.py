@@ -5,8 +5,8 @@ Run:
     python app.py
 Then open:  http://127.0.0.1:5000
 """
-import sys
 import os
+import sys
 import json
 import base64
 
@@ -150,4 +150,7 @@ def cluster_plot():
 
 if __name__ == "__main__":
     os.makedirs("static", exist_ok=True)
-    app.run(debug=True, port=5000)
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
