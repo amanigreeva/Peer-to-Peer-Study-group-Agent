@@ -38,7 +38,7 @@
       <div class="sstat" id="statGroups">
         <div class="sstat-icon">🔬</div>
         <div>
-          <div class="sstat-num" id="totalGroups">—</div>
+          <div class="sstat-num" id="totalGroups">0</div>
           <div class="sstat-label">Groups Formed</div>
         </div>
       </div>
@@ -225,7 +225,7 @@
             <tbody id="studentsBody">
               {% for s in students %}
               <tr data-id="{{ s.id }}" class="student-row">
-                <td class="cell-id">{{ s.id }}</td>
+                <td class="cell-id">{{ loop.index }}</td>
                 <td class="cell-name">{{ s.name }}</td>
                 <td class="cell-avg">
                   <span

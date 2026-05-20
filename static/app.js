@@ -90,7 +90,7 @@ document.getElementById("studentModal").addEventListener("click", (e) => {
 
 // ── Render students table ─────────────────────────────────────────────
 
-function renderStudentRow(s) {
+function renderStudentRow(s, index) {
     const avgClass = s.average_score >= 70 ? "badge-high" : s.average_score >= 50 ? "badge-mid" : "badge-low";
     const strengthTags = (s.strengths || []).slice(0, 2)
         .map(t => `<span class="tag tag-strength">${t}</span>`).join("");
@@ -98,7 +98,7 @@ function renderStudentRow(s) {
         .map(t => `<span class="tag tag-weakness">${t}</span>`).join("");
     return `
     <tr class="student-row clickable" data-id="${s.id}">
-      <td class="cell-id">${s.id}</td>
+      <td class="cell-id">${index + 1}</td>
       <td class="cell-name">${s.name}</td>
       <td><span class="badge ${avgClass}">${s.average_score.toFixed(1)}</span></td>
       <td class="cell-tags">${strengthTags}</td>
@@ -116,9 +116,22 @@ async function refreshStudents() {
     studentsMap = {};
     students.forEach(s => studentsMap[s.id] = s);
 
-    document.getElementById("totalStudents").textContent = students.length;
+    const len = students.length;
+    document.getElementById("totalStudents").textContent = len;
+    const rosterCount = document.getElementById("rosterCount");
+    if (rosterCount) {
+        rosterCount.textContent = `${len} student${len !== 1 ? 's' : ''}`;
+    }
+
+    if (len === 0) {
+        document.getElementById("totalGroups").textContent = "0";
+        document.getElementById("compScore").textContent = "—";
+        const groupsSec = document.getElementById("groupsSection");
+        if (groupsSec) groupsSec.classList.add("hidden");
+    }
+
     const tbody = document.getElementById("studentsBody");
-    tbody.innerHTML = students.map(renderStudentRow).join("");
+    tbody.innerHTML = students.map((s, index) => renderStudentRow(s, index)).join("");
     attachHandlers();
 }
 
@@ -133,11 +146,8 @@ function attachHandlers() {
             const res = await fetch(`/api/remove_student/${sid}`, { method: "DELETE" });
             const data = await res.json();
             if (data.success) {
-                document.querySelector(`tr[data-id="${sid}"]`)?.remove();
-                const cnt = parseInt(document.getElementById("totalStudents").textContent, 10);
-                document.getElementById("totalStudents").textContent = cnt - 1;
+                await refreshStudents();
                 showToast("Student removed");
-                delete studentsMap[sid];
             } else {
                 showToast(data.error || "Failed to remove", "error");
             }
@@ -176,14 +186,7 @@ document.getElementById("addStudentForm").addEventListener("submit", async (e) =
     const data = await res.json();
     if (data.success) {
         showToast(`✔ Added ${data.student.name}`);
-        studentsMap[data.student.id] = data.student;
-
-        const tbody = document.getElementById("studentsBody");
-        tbody.insertAdjacentHTML("afterbegin", renderStudentRow(data.student));
-        attachHandlers();
-
-        const cnt = parseInt(document.getElementById("totalStudents").textContent, 10);
-        document.getElementById("totalStudents").textContent = cnt + 1;
+        await refreshStudents();
         form.reset();
         form.querySelectorAll(".slider-val").forEach((s, i) => { s.textContent = 50; });
         form.querySelectorAll("input[type='range']").forEach(r => { r.value = 50; });
