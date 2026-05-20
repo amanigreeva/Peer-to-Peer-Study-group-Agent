@@ -232,14 +232,14 @@ document.getElementById("btnFormGroups").addEventListener("click", async () => {
         return;
     }
 
-    renderGroups(data.groups, data.evaluation);
+    renderGroups(data.groups, data.evaluation, data.plot_image);
     const methodLabel = method === "balanced" ? "Subject-Balanced" : "Agglomerative Hierarchical";
     showToast(`✔ Formed ${Object.keys(data.groups).length} groups using ${methodLabel}`);
 });
 
 // ── Render groups ─────────────────────────────────────────────────────
 
-function renderGroups(groups, evaluation) {
+function renderGroups(groups, evaluation, plotImage) {
     // Update header stats
     document.getElementById("totalGroups").textContent = Object.keys(groups).length;
     const coverageVal = evaluation.subject_coverage_score;
@@ -340,7 +340,10 @@ function renderGroups(groups, evaluation) {
     });
 
     const vizImg = document.getElementById("vizImg");
-    vizImg.src = `/static/cluster_plot.png?t=${Date.now()}`;
+    if (plotImage) {
+        const isBase64 = plotImage.startsWith('data:');
+        vizImg.src = isBase64 ? plotImage : `${plotImage}?t=${Date.now()}`;
+    }
     document.getElementById("groupsSection").classList.remove("hidden");
 }
 

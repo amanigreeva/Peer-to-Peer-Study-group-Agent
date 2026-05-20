@@ -27,8 +27,6 @@ agent = StudyGroupAgent()
 _students_store: dict = {}   # id → Student
 _next_id = 1
 
-VIZ_PATH = os.path.join("static", "cluster_plot.png")
-
 
 def _reload_agent():
     agent.load_students(list(_students_store.values()))
@@ -116,8 +114,8 @@ def form_groups():
     try:
         groups = agent.form_groups(method=method, n_groups=n_groups)
         evaluation = agent.evaluate_groups(groups)
-        # Save visualisation
-        agent.visualize_groups(groups, save_path=VIZ_PATH)
+        # Generate visualisation in memory
+        plot_image = agent.visualize_groups(groups, save_path=None)
 
         # Serialise groups
         serialised = {
@@ -128,6 +126,7 @@ def form_groups():
             "success": True,
             "groups": serialised,
             "evaluation": evaluation,
+            "plot_image": plot_image,
         })
     except ValueError as e:
         return jsonify({"success": False, "error": str(e)}), 400
@@ -140,16 +139,6 @@ def seed():
     _seed_sample_data(max(4, min(n, 100)))
     return jsonify({"success": True, "count": len(_students_store)})
 
-
-@app.route("/static/cluster_plot.png")
-def cluster_plot():
-    if os.path.exists(VIZ_PATH):
-        return send_file(VIZ_PATH, mimetype="image/png")
-    return "", 404
-
-
-if __name__ == "__main__":
-    os.makedirs("static", exist_ok=True)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))

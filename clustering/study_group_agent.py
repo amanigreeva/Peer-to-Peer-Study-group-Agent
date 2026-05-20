@@ -377,7 +377,7 @@ class StudyGroupAgent:
     def visualize_groups(
         self,
         groups: Optional[Dict[int, List[Student]]] = None,
-        save_path: str = "static/cluster_plot.png",
+        save_path: Optional[str] = None,
     ) -> str:
         """
         Generate a 2-D PCA scatter plot of students coloured by group.
@@ -462,10 +462,20 @@ class StudyGroupAgent:
         )
 
         plt.tight_layout()
-        os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else ".", exist_ok=True)
-        fig.savefig(save_path, dpi=130, bbox_inches="tight", facecolor=fig.get_facecolor())
-        plt.close(fig)
-        return save_path
+        if save_path:
+            os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else ".", exist_ok=True)
+            fig.savefig(save_path, dpi=130, bbox_inches="tight", facecolor=fig.get_facecolor())
+            plt.close(fig)
+            return save_path
+        else:
+            import io
+            import base64
+            buf = io.BytesIO()
+            fig.savefig(buf, format="png", dpi=130, bbox_inches="tight", facecolor=fig.get_facecolor())
+            plt.close(fig)
+            buf.seek(0)
+            img_b64 = base64.b64encode(buf.read()).decode("utf-8")
+            return f"data:image/png;base64,{img_b64}"
 
     # ------------------------------------------------------------------
     # Pretty-print
